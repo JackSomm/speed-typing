@@ -9,28 +9,35 @@ class Game:
   def __init__(self):
     self.root = Tk()
     self.running = False
-    self.game_over = False
 
+    # Get text to copy
     self.res = requests.get('https://random-word-api.herokuapp.com/word?number=10')
     self.text_to_copy = StringVar()
     self.text_to_copy.set(' '.join(self.res.json()))
 
+    # Frame to better organize the smaller widgets
     self.sm_frame = ttk.Frame(self.root)
     self.sm_frame.grid(column=1, row=4)
 
+    # Timer var and counter for stat calculations
+    self.calc_thread = None
     self.timer = -1
     self.counter = 0
 
+    # Minutes and seconds for timer
     self.minutes = StringVar() 
     self.seconds = StringVar()
     self.minutes.set("00")
     self.seconds.set("00")
 
+    # Label to display stats
     self.speed_label = Label(self.sm_frame, text="Speed \n 0.0 CPS\n 0.0 CPM", font=("Arial", 12))
 
+    # Instructions 
     self.instructions_text = "Please enter the amount of time you wish to test for. To start press tab inside the typing area. To retrieve new words press enter."
     self.instructions = Label(self.root, text=self.instructions_text, font=("Arial", 11))
 
+    # Labels and entries to set timer
     self.minutes_label = Label(self.sm_frame, text="Minutes", font=("Arial", 12))
     self.seconds_label = Label(self.sm_frame, text="Seconds", font=("Arial", 12))
     self.minutes_entry = Entry(self.sm_frame, width=3, font=("Arial", 13), textvariable=self.minutes)
@@ -69,6 +76,7 @@ class Game:
     self.root.mainloop()
 
   def count(self, timer):
+    """ Counts the timer down starting from where the user sets the time at """
     if self.running:
       if timer > -1:
         mins, secs = divmod(timer, 60)
@@ -82,6 +90,7 @@ class Game:
       self.root.after_cancel(self.after_loop)
 
   def start(self, event):
+    """ Starts the game once the user presses the Tab key """
     if not self.running:
       self.running = True
 
@@ -90,15 +99,17 @@ class Game:
       self.count(self.counter)
       
       # Start the stat calculation thread
-      t = threading.Thread(target=self.calc_stats)
-      t.start()
+      self.calc_thread = threading.Thread(target=self.calc_stats)
+      self.calc_thread.start()
 
   def pause(self):
+    """ Pauses the game """
     if self.running:
       self.root.after_cancel(self.after_loop)
       self.running = False
 
   def calc_stats(self):
+    """ Calculate character per minute/second """
     while self.running:
       time.sleep(0.1)
       self.counter += 0.1
@@ -107,6 +118,7 @@ class Game:
       self.speed_label.config(text=f"Speed: \n{cps:.2f} CPS\n{cpm:.2f} CPM")
 
   def get_new_words(self, event):
+    """ Retrieve new words when the user presses the correct key """
     if self.running:
       self.res = requests.get('https://random-word-api.herokuapp.com/word?number=10')
       self.text_to_copy.set(' '.join(self.res.json()))
