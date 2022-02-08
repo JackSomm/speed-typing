@@ -17,11 +17,15 @@ class Game:
         self.text_to_copy = tk.StringVar()
         self.text_to_copy.set(' '.join(self.res.json()))
 
-        # Frame to better organize the smaller widgets
+        # Frames to better organize the smaller widgets
         self.text_frame = ttk.Frame(self.root)
-        self.sm_frame = ttk.Frame(self.root)
         self.text_frame.grid(column=0, row=0)
-        self.sm_frame.grid(column=0, row=1)
+        self.speed_frame = ttk.Frame(self.root)
+        self.speed_frame.grid(column=0, row=1)
+        self.time_frame = ttk.Frame(self.root)
+        self.time_frame.grid(column=0, row=2)
+        self.btn_frame = ttk.Frame(self.root)
+        self.btn_frame.grid(column=0, row=3)
 
         # Timer var and counter for stat calculations
         self.calc_thread = None
@@ -36,21 +40,21 @@ class Game:
 
         # Label to display stats
         self.speed_label = tk.Label(
-            self.sm_frame, text="Speed \n 0.0 CPS\n 0.0 CPM", font=("Arial", 12))
+            self.speed_frame, text="Speed \n 0.0 CPS\n 0.0 CPM", font=("Arial", 12))
 
         # Instructions
-        self.instructions_text = "Please enter the amount of time you wish to test for. To start press tab inside the typing area. To retrieve new words press enter."
+        self.instructions_text = "Please enter the amount of time you wish to test for.\nTo start press tab inside the typing area.\nTo retrieve new words press enter."
         self.instructions = tk.Label(
             self.text_frame, text=self.instructions_text, font=("Arial", 11))
 
         # Labels and entries to set timer
         self.minutes_label = tk.Label(
-            self.sm_frame, text="Minutes", font=("Arial", 12))
+            self.time_frame, text="Minutes", font=("Arial", 12))
         self.seconds_label = tk.Label(
-            self.sm_frame, text="Seconds", font=("Arial", 12))
-        self.minutes_entry = tk.Entry(self.sm_frame, width=3, font=(
+            self.time_frame, text="Seconds", font=("Arial", 12))
+        self.minutes_entry = tk.Entry(self.time_frame, width=3, font=(
             "Arial", 13), textvariable=self.minutes)
-        self.seconds_entry = tk.Entry(self.sm_frame, width=3, font=(
+        self.seconds_entry = tk.Entry(self.time_frame, width=3, font=(
             "Arial", 13), textvariable=self.seconds)
 
         # Retreived paragraph to copy
@@ -64,11 +68,11 @@ class Game:
         self.type_area.bind("<Tab>", self.start)
         self.type_area.bind("<Return>", self.get_new_words)
 
-        self.quit_btn = ttk.Button(self.sm_frame, text="Quit", command=self.root.destroy)
+        self.quit_btn = ttk.Button(
+            self.btn_frame, text="Quit", command=self.root.destroy)
 
-        self.pause_btn = ttk.Button(self.sm_frame,
-                                    text="Pause",
-                                    command=self.pause)
+        self.pause_btn = ttk.Button(
+            self.btn_frame, text="Pause", command=self.pause)
 
         # Layout
         self.text.grid(column=0, row=0, ipadx=20, ipady=20)
@@ -85,7 +89,9 @@ class Game:
         self.root.mainloop()
 
     def count(self, timer):
-        """ Counts the timer down starting from where the user sets the time at """
+        """
+        Counts the timer down starting from where the user sets the time at
+        """
         if self.running:
             if timer > -1:
                 mins, secs = divmod(timer, 60)
@@ -99,7 +105,9 @@ class Game:
             self.root.after_cancel(self.after_loop)
 
     def start(self, event):
-        """ Starts the game once the user presses the Tab key """
+        """
+        Starts the game once the user presses the Tab key
+        """
         if not self.running:
             self.running = True
 
@@ -111,18 +119,11 @@ class Game:
             self.calc_thread = threading.Thread(target=self.calc_stats)
             self.calc_thread.start()
 
-            if self.text_to_copy.get() == self.type_area.get():
-                self.type_area.config(fg="green")
-            elif (self.key_pressed == 'Return') and not (self.text_to_copy.get() == self.type_area.get()):
-                self.type_area.config(fg="red")
-
-    def pause(self, event):
+    def pause(self):
         """ Pauses the game """
         if self.running:
             self.root.after_cancel(self.after_loop)
             self.running = False
-
-        self.key_pressed = event.char
 
     def calc_stats(self):
         """ Calculate character per minute/second """
@@ -139,7 +140,6 @@ class Game:
             'https://random-word-api.herokuapp.com/word?number=5')
         self.text_to_copy.set(' '.join(self.res.json()))
         self.key_pressed = event.keysym
-        print(self.key_pressed)
 
 
 Game()
